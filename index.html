@@ -87,8 +87,9 @@
   </table>
 
   <script>
-    const scriptURL =
-      "https://script.google.com/macros/s/AKfycbxqIh5Rr_kQsUkA06vlty9Jo2fnDeAtkURrEAMMsrGh-4wkbSuNyFBc7bv0xTIiYJ3YSA/exec";
+ const scriptURL =
+  "https://api.allorigins.win/raw?url=" +
+  encodeURIComponent("https://script.google.com/macros/s/AKfycbxqIh5Rr_kQsUkA06vlty9Jo2fnDeAtkURrEAMMsrGh-4wkbSuNyFBc7bv0xTIiYJ3YSA/exec");
 
     const tableBody = document.querySelector("#matchesTable tbody");
     const searchInput = document.getElementById("search");
