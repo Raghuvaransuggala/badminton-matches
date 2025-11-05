@@ -5,16 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🏸 Team Matches</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #eaf7e2; padding: 20px; color: #333; }
-    h1 { text-align: center; color: #1b5e20; }
-    .controls { display: flex; justify-content: space-between; margin-bottom: 15px; }
-    button { background-color: #388e3c; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-    button:hover { background-color: #2e7d32; }
-    input[type="text"] { padding: 6px; border-radius: 4px; border: 1px solid #ccc; width: 200px; }
-    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
-    th, td { border: 1px solid #c8e6c9; padding: 8px; text-align: center; }
-    th { background-color: #a5d6a7; color: #1b5e20; }
-    td[contenteditable="true"] { background-color: #f5fff5; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eaf7e2;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #1b5e20;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    button {
+      background-color: #388e3c;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2e7d32;
+    }
+    input[type="text"] {
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 250px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #c8e6c9;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #a5d6a7;
+      color: #1b5e20;
+    }
+    td[contenteditable="true"] {
+      background-color: #f5fff5;
+    }
   </style>
 </head>
 <body>
@@ -45,16 +87,23 @@
   </table>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbxqIh5Rr_kQsUkA06vlty9Jo2fnDeAtkURrEAMMsrGh-4wkbSuNyFBc7bv0xTIiYJ3YSA/exec"; // 👈 Replace this
+    const scriptURL =
+      "https://script.google.com/macros/s/AKfycbxqIh5Rr_kQsUkA06vlty9Jo2fnDeAtkURrEAMMsrGh-4wkbSuNyFBc7bv0xTIiYJ3YSA/exec";
+
     const tableBody = document.querySelector("#matchesTable tbody");
     const searchInput = document.getElementById("search");
     let currentData = [];
 
     async function loadData() {
-      const res = await fetch(scriptURL);
-      const data = await res.json();
-      currentData = data;
-      renderTable(data);
+      try {
+        const res = await fetch(scriptURL + "?t=" + Date.now(), { mode: "cors" });
+        const data = await res.json();
+        currentData = data;
+        renderTable(data);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        alert("⚠️ Unable to load match data. Please check your script permissions.");
+      }
     }
 
     function renderTable(data) {
@@ -73,7 +122,13 @@
           <td contenteditable="true">${row["Team B P2"] || ""}</td>
           <td contenteditable="true">${row["Time"] || ""}</td>
           <td contenteditable="true">${row["Court"] || ""}</td>
-          <td contenteditable="true">${row["Team Won"] || ""}</td>
+          <td>
+            <select>
+              <option value="">--Select--</option>
+              <option value="Team A" ${row["Team Won"] === "Team A" ? "selected" : ""}>Team A</option>
+              <option value="Team B" ${row["Team Won"] === "Team B" ? "selected" : ""}>Team B</option>
+            </select>
+          </td>
         `;
         tableBody.appendChild(tr);
       });
@@ -83,6 +138,7 @@
       const rows = [...tableBody.querySelectorAll("tr")];
       const newData = rows.map(r => {
         const cells = r.querySelectorAll("td");
+        const select = r.querySelector("select");
         return {
           "#": cells[0].innerText.trim(),
           "Team A P1": cells[1].innerText.trim(),
@@ -91,22 +147,28 @@
           "Team B P2": cells[4].innerText.trim(),
           "Time": cells[5].innerText.trim(),
           "Court": cells[6].innerText.trim(),
-          "Team Won": cells[7].innerText.trim()
+          "Team Won": select ? select.value : ""
         };
       });
 
-      await fetch(scriptURL, {
-        method: "POST",
-        body: JSON.stringify(newData),
-        headers: { "Content-Type": "application/json" }
-      });
-      alert("✅ Matches updated successfully in Google Sheet!");
-      loadData();
+      try {
+        await fetch(scriptURL, {
+          method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newData)
+        });
+        alert("✅ Matches updated successfully in Google Sheet!");
+        loadData();
+      } catch (err) {
+        console.error("Error saving data:", err);
+        alert("⚠️ Error saving data. Please try again.");
+      }
     }
 
     document.getElementById("refresh").addEventListener("click", loadData);
     document.getElementById("save").addEventListener("click", saveData);
-    searchInput.addEventListener("input", loadData);
+    searchInput.addEventListener("input", () => renderTable(currentData));
 
     loadData();
   </script>
