@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Team Matches</title>
+<style>
+  body { font-family: Poppins, sans-serif; background:#e8f5e9; color:#333; margin:20px; }
+  h1 { text-align:center; color:#2e7d32; }
+  input[type="text"] { width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #aaa; }
+  table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; }
+  th, td { padding:10px; border:1px solid #ddd; text-align:center; }
+  th { background:#43a047; color:white; }
+  tr:nth-child(even) { background:#f9f9f9; }
+</style>
+</head>
+<body>
+  <h1>Team Matches</h1>
+  <input type="text" id="searchInput" placeholder="Search by player name...">
+  <table id="matchesTable">
+    <thead>
+      <tr>
+        <th>#</th><th>Team A P1</th><th>Team A P2</th><th>Team B P1</th>
+        <th>Team B P2</th><th>Time</th><th>Court</th><th>Team Won</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbxqIh5Rr_kQsUkA06vlty9Jo2fnDeAtkURrEAMMsrGh-4wkbSuNyFBc7bv0xTIiYJ3YSA/exec"; // 👈 Replace this
+
+async function fetchData() {
+  const res = await fetch(SHEET_URL);
+  const data = await res.json();
+  const tbody = document.querySelector("#matchesTable tbody");
+  tbody.innerHTML = "";
+
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row["#"] || ""}</td>
+      <td>${row["Team A P1"] || ""}</td>
+      <td>${row["Team A P2"] || ""}</td>
+      <td>${row["Team B P1"] || ""}</td>
+      <td>${row["Team B P2"] || ""}</td>
+      <td>${row["Time"] || ""}</td>
+      <td>${row["Court"] || ""}</td>
+      <td>${row["Team Won"] || ""}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById("searchInput").addEventListener("keyup", e => {
+  const filter = e.target.value.toLowerCase();
+  const rows = document.querySelectorAll("#matchesTable tbody tr");
+  rows.forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(filter) ? "" : "none";
+  });
+});
+
+fetchData();
+</script>
+</body>
+</html>
