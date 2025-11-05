@@ -1,65 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Team Matches</title>
-<style>
-  body { font-family: Poppins, sans-serif; background:#e8f5e9; color:#333; margin:20px; }
-  h1 { text-align:center; color:#2e7d32; }
-  input[type="text"] { width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #aaa; }
-  table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; }
-  th, td { padding:10px; border:1px solid #ddd; text-align:center; }
-  th { background:#43a047; color:white; }
-  tr:nth-child(even) { background:#f9f9f9; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🏸 Team Matches</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #eaf7e2; padding: 20px; color: #333; }
+    h1 { text-align: center; color: #1b5e20; }
+    .controls { display: flex; justify-content: space-between; margin-bottom: 15px; }
+    button { background-color: #388e3c; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+    button:hover { background-color: #2e7d32; }
+    input[type="text"] { padding: 6px; border-radius: 4px; border: 1px solid #ccc; width: 200px; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+    th, td { border: 1px solid #c8e6c9; padding: 8px; text-align: center; }
+    th { background-color: #a5d6a7; color: #1b5e20; }
+    td[contenteditable="true"] { background-color: #f5fff5; }
+  </style>
 </head>
 <body>
-  <h1>Team Matches</h1>
-  <input type="text" id="searchInput" placeholder="Search by player name...">
+  <h1>🏸 Team Matches</h1>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search player name..." />
+    <div>
+      <button id="refresh">🔄 Refresh</button>
+      <button id="save">💾 Save Changes</button>
+    </div>
+  </div>
+
   <table id="matchesTable">
     <thead>
       <tr>
-        <th>#</th><th>Team A P1</th><th>Team A P2</th><th>Team B P1</th>
-        <th>Team B P2</th><th>Time</th><th>Court</th><th>Team Won</th>
+        <th>#</th>
+        <th>Team A P1</th>
+        <th>Team A P2</th>
+        <th>Team B P1</th>
+        <th>Team B P2</th>
+        <th>Time</th>
+        <th>Court</th>
+        <th>Team Won</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
-<script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbxqIh5Rr_kQsUkA06vlty9Jo2fnDeAtkURrEAMMsrGh-4wkbSuNyFBc7bv0xTIiYJ3YSA/exec"; // 👈 Replace this
+  <script>
+    const scriptURL = "PASTE_YOUR_GOOGLE_SCRIPT_URL_HERE"; // 👈 Replace this
+    const tableBody = document.querySelector("#matchesTable tbody");
+    const searchInput = document.getElementById("search");
+    let currentData = [];
 
-async function fetchData() {
-  const res = await fetch(SHEET_URL);
-  const data = await res.json();
-  const tbody = document.querySelector("#matchesTable tbody");
-  tbody.innerHTML = "";
+    async function loadData() {
+      const res = await fetch(scriptURL);
+      const data = await res.json();
+      currentData = data;
+      renderTable(data);
+    }
 
-  data.forEach(row => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${row["#"] || ""}</td>
-      <td>${row["Team A P1"] || ""}</td>
-      <td>${row["Team A P2"] || ""}</td>
-      <td>${row["Team B P1"] || ""}</td>
-      <td>${row["Team B P2"] || ""}</td>
-      <td>${row["Time"] || ""}</td>
-      <td>${row["Court"] || ""}</td>
-      <td>${row["Team Won"] || ""}</td>`;
-    tbody.appendChild(tr);
-  });
-}
+    function renderTable(data) {
+      const searchTerm = searchInput.value.toLowerCase();
+      const filtered = data.filter(row =>
+        Object.values(row).some(v => v && v.toString().toLowerCase().includes(searchTerm))
+      );
+      tableBody.innerHTML = "";
+      filtered.forEach((row, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td contenteditable="true">${row["#"] || i + 1}</td>
+          <td contenteditable="true">${row["Team A P1"] || ""}</td>
+          <td contenteditable="true">${row["Team A P2"] || ""}</td>
+          <td contenteditable="true">${row["Team B P1"] || ""}</td>
+          <td contenteditable="true">${row["Team B P2"] || ""}</td>
+          <td contenteditable="true">${row["Time"] || ""}</td>
+          <td contenteditable="true">${row["Court"] || ""}</td>
+          <td contenteditable="true">${row["Team Won"] || ""}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
 
-document.getElementById("searchInput").addEventListener("keyup", e => {
-  const filter = e.target.value.toLowerCase();
-  const rows = document.querySelectorAll("#matchesTable tbody tr");
-  rows.forEach(r => {
-    r.style.display = r.textContent.toLowerCase().includes(filter) ? "" : "none";
-  });
-});
+    async function saveData() {
+      const rows = [...tableBody.querySelectorAll("tr")];
+      const newData = rows.map(r => {
+        const cells = r.querySelectorAll("td");
+        return {
+          "#": cells[0].innerText.trim(),
+          "Team A P1": cells[1].innerText.trim(),
+          "Team A P2": cells[2].innerText.trim(),
+          "Team B P1": cells[3].innerText.trim(),
+          "Team B P2": cells[4].innerText.trim(),
+          "Time": cells[5].innerText.trim(),
+          "Court": cells[6].innerText.trim(),
+          "Team Won": cells[7].innerText.trim()
+        };
+      });
 
-fetchData();
-</script>
+      await fetch(scriptURL, {
+        method: "POST",
+        body: JSON.stringify(newData),
+        headers: { "Content-Type": "application/json" }
+      });
+      alert("✅ Matches updated successfully in Google Sheet!");
+      loadData();
+    }
+
+    document.getElementById("refresh").addEventListener("click", loadData);
+    document.getElementById("save").addEventListener("click", saveData);
+    searchInput.addEventListener("input", loadData);
+
+    loadData();
+  </script>
 </body>
 </html>
